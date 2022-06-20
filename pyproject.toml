@@ -1,0 +1,25 @@
+[build-system]
+requires=["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unscrambler"
+version = "0.3.0"
+description = "A utility for working with test papers in PDF form."
+readme = "README.md"
+authors = [{ name = "Peter Davison-Reiber", email = "peter@davisonreiber.com" }]
+license = { file = "LICENSE" }
+
+dependencies = [
+    "argparse",
+    "numpy >= 1.22.0",
+    "os",
+    "PyPDF2 >= 2.2.0",
+]
+
+
+[project.urls]
+Homepage = "https://github.com/pdavisonreiber/unscrambler"
+
+[project.scripts]
+unscrambler = "unscrambler:main"
