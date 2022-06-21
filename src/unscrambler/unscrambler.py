@@ -1,5 +1,4 @@
 import argparse
-import numpy
 import os
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
@@ -68,8 +67,11 @@ def splitA3Booklet(document1, document2, pagesPerDocument):
 	pages1 = [document1.getPage(i) for i in range(numPages)]
 	pages2 = [document2.getPage(i) for i in range(numPages)]
 	
-	arraysOfPages1 = numpy.array_split(pages1, numDocs)
-	arraysOfPages2 = numpy.array_split(pages2, numDocs)
+	arraysOfPages1 = [[document1.getPage(i) for i in range(k * pagesPerDocument, (k + 1) * pagesPerDocument)] for k in range(numDocs)]
+	arraysOfPages2 = [[document2.getPage(i) for i in range(k * pagesPerDocument, (k + 1) * pagesPerDocument)] for k in range(numDocs)]
+	
+	#arraysOfPages1 = numpy.array_split(pages1, numDocs)
+	#arraysOfPages2 = numpy.array_split(pages2, numDocs)
 	
 	outputWriter = PdfFileWriter()
 	
