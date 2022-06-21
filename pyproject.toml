@@ -8,7 +8,6 @@ version = "0.3.0"
 description = "A utility for working with test papers in PDF form."
 readme = "README.md"
 authors = [{ name = "Peter Davison-Reiber", email = "peter@davisonreiber.com" }]
-license = { file = "LICENSE" }
 
 dependencies = [
     "argparse",
