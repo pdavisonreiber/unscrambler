@@ -22,4 +22,4 @@ dependencies = [
 Homepage = "https://github.com/pdavisonreiber/unscrambler"
 
 [project.scripts]
-unscrambler = "unscrambler:main"
+unscrambler = "unscrambler.unscrambler:main"
