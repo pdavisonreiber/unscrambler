@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "unscrambler"
-version = "0.3.0"
+version = "0.3.1"
 description = "A utility for working with test papers in PDF form."
 readme = "README.md"
 authors = [{ name = "Peter Davison-Reiber", email = "peter@davisonreiber.com" }]
