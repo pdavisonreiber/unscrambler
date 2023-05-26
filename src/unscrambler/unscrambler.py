@@ -1,121 +1,147 @@
+#!/opt/homebrew/bin/python3
+
 import argparse
 import os
-from PyPDF2 import PdfFileReader, PdfFileWriter
+import datetime
+import yaml
+from PyPDF2 import PdfReader, PdfWriter
 
 def cropPageLeft(page):
-	width = page.mediaBox.lowerRight[0]
-	height = page.mediaBox.upperLeft[1]
+	width = page.mediabox.lower_right[0]
+	height = page.mediabox.upper_left[1]
 	
 	if width > height:
-		page.cropBox.lowerLeft = (0, 0)
-		page.cropBox.lowerRight = (width/2, 0)
-		page.cropBox.upperLeft = (0, height)
-		page.cropBox.upperRight = (width/2, height)
+		page.cropbox.lower_left = (0, 0)
+		page.cropbox.lower_right = (width/2, 0)
+		page.cropbox.upper_left = (0, height)
+		page.cropbox.upper_right = (width/2, height)
 	else:
-		page.cropBox.lowerLeft = (0, height/2)
-		page.cropBox.lowerRight = (width, height/2)
-		page.cropBox.upperLeft = (0, height)
-		page.cropBox.upperRight = (width, height)
+		page.cropbox.lower_left = (0, height/2)
+		page.cropbox.lower_right = (width, height/2)
+		page.cropbox.upper_left = (0, height)
+		page.cropbox.upper_right = (width, height)
 		
 
 def cropPageRight(page):
-	width = page.mediaBox.lowerRight[0]
-	height = page.mediaBox.upperLeft[1]
+	width = page.mediabox.lower_right[0]
+	height = page.mediabox.upper_left[1]
 	
 	if width > height:
-		page.cropBox.lowerLeft = (width/2, 0)
-		page.cropBox.lowerRight = (width, 0)
-		page.cropBox.upperLeft = (width/2, height)
-		page.cropBox.upperRight = (width, height)
+		page.cropbox.lower_left = (width/2, 0)
+		page.cropbox.lower_right = (width, 0)
+		page.cropbox.upper_left = (width/2, height)
+		page.cropbox.upper_right = (width, height)
 	else:
-		page.cropBox.lowerLeft = (0, 0)
-		page.cropBox.lowerRight = (width, 0)
-		page.cropBox.upperLeft = (0, height/2)
-		page.cropBox.upperRight = (width, height/2)
+		page.cropbox.lower_left = (0, 0)
+		page.cropbox.lower_right = (width, 0)
+		page.cropbox.upper_left = (0, height/2)
+		page.cropbox.upper_right = (width, height/2)
 	
 	
 def splitPDF(document, pagesPerDocument):
-	numberOfPages = document.getNumPages()
+	numberOfPages = len(document.pages)
 	
 	if numberOfPages % pagesPerDocument != 0:
 		raise Exception("Number of pages in file not divisible by " + str(pagesPerDocument) + ".")
 		
-	writers = [PdfFileWriter() for _ in range(numberOfPages // pagesPerDocument)]
+	writers = [PdfWriter() for _ in range(numberOfPages // pagesPerDocument)]
 	
 	for i in range(numberOfPages):
-		writers[i // pagesPerDocument].addPage(document.getPage(i))
+		writers[i // pagesPerDocument].add_page(document.pages[i])
 		
 	return writers
 		
 		
 def splitA3Booklet(document1, document2, pagesPerDocument):
-	numPages = document1.getNumPages()
+	numPages = len(document1.pages)
 	
 	if numPages % pagesPerDocument != 0:
 		raise Exception(f"Number of pages not divisible by {pagesPerDocument}.")
 	
-	#document2 = PdfFileWriter()
-	#pages = [document1.getPage(i) for i in range(numPages)]
-	#for page in pages:
-	#	document2.addPage(page)
-	
-	page = document1.getPage(0)
-	width = page.mediaBox.lowerRight[0]
-	height = page.mediaBox.upperLeft[1]
+	page = document1.pages[0]
+	width = page.mediabox.lower_right[0]
+	height = page.mediabox.upper_left[1]
 	numDocs = numPages // pagesPerDocument
 	
-	pages1 = [document1.getPage(i) for i in range(numPages)]
-	pages2 = [document2.getPage(i) for i in range(numPages)]
-	
-	arraysOfPages1 = [[document1.getPage(i) for i in range(k * pagesPerDocument, (k + 1) * pagesPerDocument)] for k in range(numDocs)]
-	arraysOfPages2 = [[document2.getPage(i) for i in range(k * pagesPerDocument, (k + 1) * pagesPerDocument)] for k in range(numDocs)]
-	
-	#arraysOfPages1 = numpy.array_split(pages1, numDocs)
-	#arraysOfPages2 = numpy.array_split(pages2, numDocs)
-	
-	outputWriter = PdfFileWriter()
+	arraysOfPages1 = [[document1.pages[i] for i in range(k * pagesPerDocument, (k + 1) * pagesPerDocument)] for k in range(numDocs)]
+	arraysOfPages2 = [[document2.pages[i] for i in range(k * pagesPerDocument, (k + 1) * pagesPerDocument)] for k in range(numDocs)]
+		
+	outputWriter = PdfWriter()
 	
 	for i in range(numDocs):
-		writer = PdfFileWriter()
+		writer = PdfWriter()
 		
 		for j in range(pagesPerDocument):
 			cropPageLeft(arraysOfPages1[i][j])
 			cropPageRight(arraysOfPages2[i][j])
 			
 			if j % 2 == 0:
-				writer.insertPage(arraysOfPages1[i][j])
-				writer.addPage(arraysOfPages2[i][j])	
+				writer.insert_page(arraysOfPages1[i][j])
+				writer.add_page(arraysOfPages2[i][j])
 			if j % 2 == 1:
-				writer.addPage(arraysOfPages1[i][j])
-				writer.insertPage(arraysOfPages2[i][j])	
+				writer.add_page(arraysOfPages1[i][j])
+				writer.insert_page(arraysOfPages2[i][j])
 			
-		for page in [writer.getPage(i) for i in range(writer.getNumPages())]:
-			outputWriter.addPage(page)
+		for page in writer.pages:
+			outputWriter.add_page(page)
 			
 	return outputWriter
 	
 	
-def scramble(document, pagesPerDocument, split=False):
-	numberOfPages = document.getNumPages()
+def scramble(document, pagesPerDocument, split=False, doublePage=False, doublePageReversed=False):
+	numberOfPages = len(document.pages)
 	
 	if numberOfPages % pagesPerDocument != 0:
 		raise Exception("Number of pages in file not divisible by " + str(pagesPerDocument) + ".")
 	
-	writers = splitPDF(document, pagesPerDocument)
-	outputWriters = [PdfFileWriter() for _ in range(pagesPerDocument)]
+	if doublePageReversed:
+		writers = splitPDF(document, pagesPerDocument * 2)
+	else:
+		writers = splitPDF(document, pagesPerDocument)
 	
-	for writer in writers:
-		for i in range(writer.getNumPages()):
-			outputWriters[i].addPage(writer.getPage(i))
+	if doublePage:
+		if numberOfPages % 2 != 0:
+			raise Exception("Number of pages per document is not even.")
+	
+		outputWriters = [PdfWriter() for _ in range(pagesPerDocument // 2)]
+		
+		for writer in writers:
+			outputWriters[0].add_page(writer.pages[0])
+			outputWriters[0].add_page(writer.pages[len(writer.pages) - 1])
+			
+			for i in range(1, len(writer.pages) // 2):
+				outputWriters[i].add_page(writer.get_page(2*i - 1))
+				outputWriters[i].add_page(writer.get_page(2*i))
+			
+	elif doublePageReversed:
+		outputWriters = [PdfWriter() for _ in range(pagesPerDocument)]
+		
+		for i in range(pagesPerDocument):
+			outputWriters[i].add_page(writers[0].pages[2*i])
+		for writer in writers[1:]:
+			for i in range(pagesPerDocument):
+				outputWriters[i].add_page(writer.pages[2*i])
+				outputWriters[i].add_page(writer.pages[2*i + 1])
+		for i in range(pagesPerDocument):
+			outputWriters[i].add_page(writers[0].pages[2*i + 1])
+				
+	else:
+		outputWriters = [PdfWriter() for _ in range(pagesPerDocument)]
+		
+		for writer in writers:
+			for i in range(len(writer.pages)):
+				outputWriters[i].add_page(writer.pages[i])
+		
+	
 			
 	if split:
 		return outputWriters
 	else:
-		finalWriter = PdfFileWriter()
+		finalWriter = PdfWriter()
 	
 		for outputWriter in outputWriters:
-			for page in [outputWriter.getPage(i) for i in range(outputWriter.getNumPages())]:
-				finalWriter.addPage(page)
+			for page in [outputWriter.pages[i] for i in range(len(outputWriter.pages))]:
+				finalWriter.add_page(page)
 	
 		return finalWriter
 	
@@ -132,10 +158,10 @@ def saveDocuments(documents, filenamePrefix):
 	
 	
 		
-def unscrambler(filename, pagesPerDocument, isBooklet, split, rearrange):
+def unscramble(filename, pagesPerDocument, isBooklet, split, rearrange, doublePage, doublePageReversed):
 	pdf = open(filename, "rb")
-	document = PdfFileReader(pdf)
-	document2 = PdfFileReader(pdf)
+	document = PdfReader(pdf)
+	document2 = PdfReader(pdf)
 	
 	filenamePrefix = filename.replace(".pdf", "")
 	
@@ -145,10 +171,18 @@ def unscrambler(filename, pagesPerDocument, isBooklet, split, rearrange):
 			pagesPerDocument *= 2
 		
 		if split:
-			documents = scramble(document, pagesPerDocument, True)
+			documents = scramble(document, pagesPerDocument, split=True, doublePageReversed=doublePageReversed)
 			saveDocuments(documents, filenamePrefix)
 		else:
-			document = scramble(document, pagesPerDocument)
+			if doublePage and doublePageReversed:
+				raise Exception("The -d and -dr options cannot both be selected.")
+			elif doublePage:
+				document = scramble(document, pagesPerDocument, doublePage=doublePage)
+			elif doublePageReversed:
+				document = scramble(document, pagesPerDocument, doublePageReversed=doublePageReversed)
+			else:
+				document = scramble(document, pagesPerDocument)
+			
 			with open(f"{filenamePrefix}_output.pdf", "wb") as output:
 				document.write(output)
 			
@@ -167,17 +201,33 @@ def unscrambler(filename, pagesPerDocument, isBooklet, split, rearrange):
 		documents = splitPDF(document, pagesPerDocument)
 		saveDocuments(documents, filenamePrefix)
 	else:
-		print("You must select at least one option: -r, -s, or -b.")
-	
-		
+		raise Exception("You must select at least one option: -r, -s, or -b.")
+
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("filename")
-	parser.add_argument("numpages", type=int, help="The number of pages per document")
+	parser.add_argument("numpages", type=int, help="The number of pages per document", nargs="?")
 	parser.add_argument("-b", "--booklet", action="store_true", help="Use this option if the original is an A3 booklet. Source PDF is expected to be in landscape with the middle pages coming first.")
 	parser.add_argument("-s", "--split", action="store_true", help="Use this option if you would like the output to be split into multiple files.")
 	parser.add_argument("-r", "--rearrange", action="store_true", help="Use this option to rearrange the pages.")
+	parser.add_argument("-d", "--doublePage", action="store_true", help="Use this option to rearrange pages so that double pages stay together. This assumes there is a front and back cover.")
+	parser.add_argument("-D", "--doublePageReversed", action="store_true", help="Use this option when unscrambling a document for which the -d option was used.")
+	parser.add_argument("-y", "--parseYAML", help="Use when options are being parsed from a YAML file.")
 
 	args = parser.parse_args()
 	
-	unscrambler(args.filename, args.numpages, args.booklet, args.split, args.rearrange)
+	if args.parseYAML:
+		with open(args.parseYAML, "r") as yamlFile:
+			options = yaml.safe_load(yamlFile.read())
+			numpages = options["number_of_pages"]
+			booklet = options["booklet"]
+			split = options["split"]
+			rearrange = options["rearrange"]
+			doublePage = options["double_page"]
+			doublePageReversed = options["reverse_double_page"]
+		unscramble(args.filename, numpages, booklet, split, rearrange, doublePage, doublePageReversed)
+	else:
+		unscramble(args.filename, args.numpages, args.booklet, args.split, args.rearrange, args.doublePage, args.doublePageReversed)
+
+if __name__ == "__main__":
+    main()
