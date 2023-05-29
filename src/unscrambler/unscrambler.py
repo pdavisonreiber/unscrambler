@@ -145,12 +145,11 @@ def scramble(document, pagesPerDocument, split=False, doublePage=False, doublePa
 	
 		return finalWriter
 	
-def saveDocuments(documents, filenamePrefix):
-	os.mkdir(filenamePrefix + "_output")
-	directory = "./" + filenamePrefix + "_output"
-
+def saveDocuments(documents, directory):
+	os.makedirs(directory)
+	
 	for i, document in enumerate(documents):
-		filename = filenamePrefix + f"_{i + 1}.pdf"
+		filename = os.path.basename(directory) + f"_{i + 1}.pdf"
 		filePath = os.path.join(directory, filename)
 		
 		with open(filePath, "wb") as output:
@@ -163,7 +162,8 @@ def unscramble(filename, pagesPerDocument, isBooklet, split, rearrange, doublePa
 	document = PdfReader(pdf)
 	document2 = PdfReader(pdf)
 	
-	filenamePrefix = filename.replace(".pdf", "")
+	directory = os.path.splitext(filename)[0]
+	print("directory:", directory)
 	
 	if rearrange:
 		if isBooklet:
@@ -172,7 +172,7 @@ def unscramble(filename, pagesPerDocument, isBooklet, split, rearrange, doublePa
 		
 		if split:
 			documents = scramble(document, pagesPerDocument, split=True, doublePageReversed=doublePageReversed)
-			saveDocuments(documents, filenamePrefix)
+			saveDocuments(documents, directory)
 		else:
 			if doublePage and doublePageReversed:
 				raise Exception("The -d and -dr options cannot both be selected.")
@@ -192,14 +192,14 @@ def unscramble(filename, pagesPerDocument, isBooklet, split, rearrange, doublePa
 		
 		if split:
 			documents = splitPDF(document, pagesPerDocument)
-			saveDocuments(documents, filenamePrefix)
+			saveDocuments(documents, directory)
 		else:
 			with open(f"{filenamePrefix}_output.pdf", "wb") as output:
 				document.write(output)
 				
 	elif split:
 		documents = splitPDF(document, pagesPerDocument)
-		saveDocuments(documents, filenamePrefix)
+		saveDocuments(documents, directory)
 	else:
 		raise Exception("You must select at least one option: -r, -s, or -b.")
 
