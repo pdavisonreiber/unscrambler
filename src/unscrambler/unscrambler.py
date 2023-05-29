@@ -161,7 +161,6 @@ def unscramble(filename, pagesPerDocument, isBooklet, split, rearrange, doublePa
 	document2 = PdfReader(pdf)
 	
 	directory = os.path.splitext(filename)[0]
-	print("directory:", directory)
 	
 	if rearrange:
 		if isBooklet:
