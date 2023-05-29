@@ -1,5 +1,3 @@
-#!/opt/homebrew/bin/python3
-
 import argparse
 import os
 import datetime
