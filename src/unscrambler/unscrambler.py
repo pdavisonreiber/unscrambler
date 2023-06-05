@@ -180,7 +180,7 @@ def unscramble(filename, pagesPerDocument, isBooklet, split, rearrange, doublePa
 			else:
 				document = scramble(document, pagesPerDocument)
 			
-			with open(f"{filenamePrefix}_output.pdf", "wb") as output:
+			with open(f"{directory}_output.pdf", "wb") as output:
 				document.write(output)
 			
 	elif isBooklet:
@@ -191,7 +191,7 @@ def unscramble(filename, pagesPerDocument, isBooklet, split, rearrange, doublePa
 			documents = splitPDF(document, pagesPerDocument)
 			saveDocuments(documents, directory)
 		else:
-			with open(f"{filenamePrefix}_output.pdf", "wb") as output:
+			with open(f"{directory}_output.pdf", "wb") as output:
 				document.write(output)
 				
 	elif split:
